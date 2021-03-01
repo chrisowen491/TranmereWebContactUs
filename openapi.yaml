@@ -1,0 +1,56 @@
+openapi: "3.0.1"
+info:
+  description: "The tranmere web contact us stack"
+  version: "1.0"
+  title: "ContactUs"
+paths:
+  /:
+    post:
+      summary: Send a message to site admin
+      description: Send a message to site admin
+      operationId: contactUs
+      requestBody:
+        description: The request body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactUsRequest'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactUsResponse'
+      security:
+      - APIKeyHeader: []
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ContactUsFunction.Arn}/invocations
+      x-codegen-request-body-name: body
+  
+components:
+  schemas:
+    ContactUsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        desc:
+          type: string
+    ContactUsResponse:
+      type: object
+      properties:
+        result:
+          type: string
+
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      name: x-api-Key
+      in: header

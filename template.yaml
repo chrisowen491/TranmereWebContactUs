@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  The tranmere web contact us stack
+
+Globals:
+  Function:
+    Timeout: 3
+    AutoPublishAlias: live
+
+Parameters:
+  Email:
+    Type: String
+    Description: The email address to send contact to  
+  Deployment:
+    Type: String
+    Default: Canary10Percent5Minutes
+  S3BucketName:
+    Type: String
+  OpenAPIFile:
+    Type: String
+    Default: openapi.yaml
+  EnvName:
+    Type: String
+    Default: sit1
+    Description: The name of the environment to deploy to
+    AllowedValues:
+      - local
+      - ci1      
+      - sit1
+      - pre1
+      - prod1
+
+Resources:     
+
+  RestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Cors:
+        AllowOrigin: "'*'"
+      StageName: Prod
+      Name: ContactUs
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: 
+              Fn::Join:
+              - ''
+              - - s3://
+                - Ref: S3BucketName
+                - /
+                - Ref: OpenAPIFile
+
+  tranmerewebcontactus:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src
+      Handler: tranmerewebcontactus.handler
+      Runtime: nodejs12.x
+      DeploymentPreference:
+        Type: !Ref Deployment
+        Alarms:
+          - !Ref AliasErrorMetricGreaterThanZeroAlarm
+          - !Ref LatestVersionErrorMetricGreaterThanZeroAlarm
+      Tracing: Active 
+      Policies:
+      - AWSXrayWriteOnlyAccess
+      - Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ses:SendEmail'
+              - 'ses:SendRawEmail'
+            Resource: '*'      
+      Environment:
+        Variables:
+          EnvironmentName: !Ref EnvName
+          EMAIL_ADDRESS: !Ref 'Email'
+      Events:
+        PageRequest:
+          Type: Api
+          Properties:
+            Path: /
+            RestApiId: !Ref RestApi
+            Method: get
+
+  AliasErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      AlarmActions:
+        - !ImportValue cloudwatch-notifications-prod-SlackSNSTopic
+      OKActions:
+        - !ImportValue cloudwatch-notifications-prod-SlackSNSTopic
+      InsufficientDataActions:
+        - !ImportValue cloudwatch-notifications-prod-SlackSNSTopic
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Sub "${ tranmerewebcontactus}:live"
+        - Name: FunctionName
+          Value: !Ref tranmerewebcontactus
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+  LatestVersionErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      AlarmActions:
+        - !ImportValue cloudwatch-notifications-prod-SlackSNSTopic
+      OKActions:
+        - !ImportValue cloudwatch-notifications-prod-SlackSNSTopic
+      InsufficientDataActions:
+        - !ImportValue cloudwatch-notifications-prod-SlackSNSTopic
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: Resource
+          Value: !Ref tranmerewebcontactus.Version
+        - Name: FunctionName
+          Value: !Ref tranmerewebcontactus
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+
+  # This shouldn't be necerssary, but API Gateway often seems to lack permission on the lambda when using swagger definitions
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties: 
+      Action: lambda:InvokeFunction
+      SourceArn: 
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*/GET/
+      FunctionName: !Ref tranmerewebcontactus
+      Principal: apigateway.amazonaws.com
+
+  StagingBasePathMapping:
+    DependsOn: RestApiProdStage
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      BasePath: contact-us
+      DomainName: !Sub "api.${EnvName}.tranmere-web.com"
+      RestApiId: !Ref RestApi
+      Stage: Prod
+
+Outputs:
+  Endpoint:
+    Description: "API Gateway endpoint URL the endpoint"
+    Value: !Sub "https://api.${EnvName}.tranmere-web.com/contact-us/"
