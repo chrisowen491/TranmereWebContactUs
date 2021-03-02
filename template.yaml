@@ -140,7 +140,7 @@ Resources:
     Properties: 
       Action: lambda:InvokeFunction
       SourceArn: 
-        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*/GET/
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestApi}/*/POST/
       FunctionName: !Ref TranmereWebContactUs
       Principal: apigateway.amazonaws.com
 
