@@ -30,7 +30,6 @@ paths:
         type: aws_proxy
         uri:
           Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TranmereWebContactUs.Arn}/invocations
-      x-codegen-request-body-name: body
   
 components:
   schemas:
