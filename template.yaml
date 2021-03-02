@@ -37,7 +37,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Cors:
-        AllowMethods: "'POST, GET'"
+        AllowMethods: "'OPTIONS, POST, GET'"
         AllowHeaders: "'Content-Type, x-api-key'"
         AllowOrigin: "'*'"
       StageName: Prod
