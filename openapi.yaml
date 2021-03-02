@@ -53,3 +53,18 @@ components:
       type: apiKey
       name: x-api-Key
       in: header
+x-amazon-apigateway-cors:
+  allowOrigins:
+    - '*'
+  allowCredentials: true
+  exposeHeaders:
+    - x-api-key
+    - content-type
+  maxAge: 3600
+  allowMethods:
+    - GET
+    - OPTIONS
+    - POST
+  allowHeaders:
+    - x-api-key
+    - content-type

@@ -36,10 +36,6 @@ Resources:
   RestApi:
     Type: AWS::Serverless::Api
     Properties:
-      Cors:
-        AllowMethods: "'OPTIONS, POST, GET'"
-        AllowHeaders: "'Content-Type, x-api-key'"
-        AllowOrigin: "'*'"
       StageName: Prod
       Auth:
         ApiKeyRequired: true      
