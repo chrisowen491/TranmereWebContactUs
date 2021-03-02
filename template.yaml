@@ -36,9 +36,7 @@ Resources:
   RestApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: Prod
-      Auth:
-        ApiKeyRequired: true      
+      StageName: Prod    
       Name: ContactUs
       DefinitionBody:
         Fn::Transform:
