@@ -30,7 +30,32 @@ paths:
         type: aws_proxy
         uri:
           Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TranmereWebContactUs.Arn}/invocations
-  
+    options:
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {"statusCode" : 200}
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,GET,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"  
 components:
   schemas:
     ContactUsRequest:
@@ -53,18 +78,3 @@ components:
       type: apiKey
       name: x-api-Key
       in: header
-x-amazon-apigateway-cors:
-  allowOrigins:
-    - '*'
-  allowCredentials: true
-  exposeHeaders:
-    - x-api-key
-    - content-type
-  maxAge: 3600
-  allowMethods:
-    - GET
-    - OPTIONS
-    - POST
-  allowHeaders:
-    - x-api-key
-    - content-type
