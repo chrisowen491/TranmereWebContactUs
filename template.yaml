@@ -1,5 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
+Transform:
+  - AWS::Serverless-2016-10-31
+  - Name: DatadogServerless
+    Parameters:
+      stackName: !Ref "AWS::StackName"
+      addLayers: false
+      env: !Ref EnvName
+      site: datadoghq.eu
 Description: >
   The tranmere web contact us stack
 
@@ -55,13 +62,13 @@ Resources:
     Properties:
       CodeUri: src
       Handler: tranmerewebcontactus.handler
-      Runtime: nodejs12.x
+      Runtime: nodejs14.x
       DeploymentPreference:
         Type: !Ref Deployment
         Alarms:
           - !Ref AliasErrorMetricGreaterThanZeroAlarm
           - !Ref LatestVersionErrorMetricGreaterThanZeroAlarm
-      Tracing: Active 
+      Tracing: PassThrough 
       Policies:
       - AWSXrayWriteOnlyAccess
       - Version: '2012-10-17'
